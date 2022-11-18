@@ -6,3 +6,7 @@
 # Datasource local storage ignored files
 /dataSources/
 /dataSources.local.xml
+X_test.csv
+X_train.csv
+sample.csv
+y_train.csv
