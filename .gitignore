@@ -6,6 +6,7 @@
 # Datasource local storage ignored files
 /dataSources/
 /dataSources.local.xml
+#Dataset
 X_test.csv
 X_train.csv
 sample.csv
@@ -19,3 +20,4 @@ submission.csv
 *__pycache__/
 .ipynb_checkpoints/
 .DS_Store
+.gitattributes
