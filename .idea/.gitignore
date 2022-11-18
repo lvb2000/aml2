@@ -10,3 +10,12 @@ X_test.csv
 X_train.csv
 sample.csv
 y_train.csv
+
+
+*.idea/
+vnev/*
+*.cfg
+submission.csv
+*__pycache__/
+.ipynb_checkpoints/
+.DS_Store
