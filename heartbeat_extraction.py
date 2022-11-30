@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import biosppy.signals.ecg as ecg
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler, RobustScaler,normalize
 
 class biosppy:
 
@@ -12,7 +13,7 @@ class biosppy:
     def __init__(self,sampling_rate):
         self.sampling_rate=sampling_rate
 
-    def fit(self,X,show=False):
+    def fit(self,X,y_train,show=False):
         for i,row in X.iterrows():
             signal = row.dropna().to_numpy(dtype='float32')
 
@@ -21,16 +22,17 @@ class biosppy:
                 extracted_heartbeats = ecg.extract_heartbeats(signal, r_peaks, self.sampling_rate)['templates']
                 #ecg.ecg(signal, self.sampling_rate,show=True)
                 #compute mean and std of extracted heartbeats
-                mean,std = self.__mean_variance__(extracted_heartbeats)
+                mean,std = self.__mean_variance__(normalize(extracted_heartbeats))
 
                 #add them into array
                 self.means = np.concatenate((self.means,np.reshape(mean,(1,180))),axis=0)
                 self.stds = np.concatenate((self.stds,np.reshape(std,(1,180))),axis=0)
-
+            else:
+                y_train=np.delete(y_train,i,axis=0)
 
         self.means = np.delete(self.means, 0, 0)
         self.stds = np.delete(self.stds,0,0)
-        return self.means,self.stds
+        return y_train
 
     def plot(self,mean,variance):
         mean = mean[np.logical_not(np.isnan(mean))]
@@ -47,7 +49,7 @@ class biosppy:
         std = np.std(out,axis=0)
         return mean , std
 
-    def toCSV(self):
+    def toCSV(self,y_train):
         columns = []
         for i in range(self.means.shape[1]):
             columns = columns + ['x{i}'.format(i=i)]
@@ -55,4 +57,6 @@ class biosppy:
         dt_mean.to_csv('mean', header=True, index=False)
         dt_std = pd.DataFrame(data=self.stds, columns=columns)
         dt_std.to_csv('std', header=True, index=False)
+        dt_std = pd.DataFrame(data=y_train, columns=['y'])
+        dt_std.to_csv('y_train1', header=True, index=False)
 
