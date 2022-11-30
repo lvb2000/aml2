@@ -6,33 +6,31 @@ import matplotlib.pyplot as plt
 class biosppy:
 
     sampling_rate=300
+    means = np.empty([1, 180])
+    stds = np.empty([1, 180])
 
     def __init__(self,sampling_rate):
         self.sampling_rate=sampling_rate
 
     def fit(self,X,show=False):
-        means= np.empty([1,1000])
-        stds = np.empty([1,1000])
         for i,row in X.iterrows():
             signal = row.dropna().to_numpy(dtype='float32')
 
             r_peaks = ecg.engzee_segmenter(signal, self.sampling_rate)['rpeaks']
             if len(r_peaks) >= 2:
                 extracted_heartbeats = ecg.extract_heartbeats(signal, r_peaks, self.sampling_rate)['templates']
-
+                #ecg.ecg(signal, self.sampling_rate,show=True)
                 #compute mean and std of extracted heartbeats
                 mean,std = self.__mean_variance__(extracted_heartbeats)
 
                 #add them into array
-                mean=np.reshape(np.pad(mean, (0, 1000 - np.size(mean)), 'constant', constant_values=(np.nan, np.nan)),(1,1000))
-                std=np.reshape(np.pad(std, (0, 1000 - np.size(std)), 'constant', constant_values=(np.nan, np.nan)),(1,1000))
-                means = np.concatenate((means,mean),axis=0)
-                stds = np.concatenate((stds,std),axis=0)
+                self.means = np.concatenate((self.means,np.reshape(mean,(1,180))),axis=0)
+                self.stds = np.concatenate((self.stds,np.reshape(std,(1,180))),axis=0)
 
 
-        means = np.delete(means, 0, 0)
-        stds = np.delete(stds,0,0)
-        return means,stds
+        self.means = np.delete(self.means, 0, 0)
+        self.stds = np.delete(self.stds,0,0)
+        return self.means,self.stds
 
     def plot(self,mean,variance):
         mean = mean[np.logical_not(np.isnan(mean))]
@@ -48,4 +46,13 @@ class biosppy:
         mean = np.mean(out,axis=0)
         std = np.std(out,axis=0)
         return mean , std
+
+    def toCSV(self):
+        columns = []
+        for i in range(self.means.shape[1]):
+            columns = columns + ['x{i}'.format(i=i)]
+        dt_mean = pd.DataFrame(data=self.means, columns=columns)
+        dt_mean.to_csv('mean', header=True, index=False)
+        dt_std = pd.DataFrame(data=self.stds, columns=columns)
+        dt_std.to_csv('std', header=True, index=False)
 
