@@ -8,7 +8,8 @@ import ANN
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
-
+from sklearn.neighbors import KNeighborsClassifier
+from imblearn.over_sampling import SMOTE
 
 #----------- IMPORT RAW ECG SIGNALS -----------#
 """
@@ -52,30 +53,54 @@ y_train.drop(y_train.columns[0],axis=1,inplace=True)
 x_train=x_train.to_numpy()
 y_train=y_train.to_numpy()
 
-#----------- TRAIN ANN CLASSIFYING 0,1,2 FROM 3 -----------#
-
-#y_train_combined = y_train1.to_numpy()
-#y_train_combined[y_train_combined == 1] = 0
-#y_train_combined[y_train_combined == 2] = 0
-#y_train_combined[y_train_combined == 3] = 1
+#----------- TRAIN ANN1 -----------#
 
 #x_train, x_test_val, y_train, y_test_val = train_test_split(x_train, y_train, test_size=0.4, random_state=42)
-model = ANN.MLP1(num_classes=4,epochs=420,predict=True)
-model.train(x_train,np.squeeze(y_train))
+model1 = ANN.MLP(num_classes=4,epochs=600,predict=True,MLP='MLP1')
+model1.train(x_train,np.squeeze(y_train))
 #,x_test_val,np.squeeze(y_test_val)
-model.predict_test_set(x_test.to_numpy())
+model1.predict_test_set(x_test.to_numpy())
 
+#----------- TRAIN ANN2 -----------#
 
-#----------- TRAIN SVC CLASSIFYING 0,1,2 FROM 3 -----------#
+model3 = ANN.MLP(num_classes=4,epochs=1300,predict=True,MLP='MLP3')
+model3.train(x_train,np.squeeze(y_train))
+#,x_test_val,np.squeeze(y_test_val)
+model3.predict_test_set(x_test.to_numpy())
 
+#----------- NORMALIZE DATA -----------#
 
-#----------- TRAIN KNN CLASSIFYING 0,1,2 FROM 3 -----------#
+scaler = StandardScaler()
+x_train_std = scaler.fit_transform(x_train)
+x_test_std = scaler.fit_transform(x_test)
+
+#----------- BALANCE DATA -----------#
+
+#smote = SMOTE(random_state = 14)
+#x_train_balanced, y_train_balanced = smote.fit_resample(x_train_std, y_train)
+
+#----------- TRAIN SVC -----------#
+
+#svc = SVC(class_weight='balanced')
+#svc.fit(x_train_balanced, y_train_balanced)
+#svc_prediction = svc.predict(x_test_std)
+
+#----------- TRAIN KNN -----------#
+# The best k has been found to be:
+k=16
+neigh = KNeighborsClassifier(n_neighbors=k)
+neigh.fit(x_train_std, np.squeeze(y_train))
+knn_prediction = neigh.predict(x_test_std)
 
 #----------- COMBINE ALL CLASSIFIERS ---------#
 
 #----------- MAKE SUBMISSION ---------#
 
-dt = pd.DataFrame(data=model.prediction, columns=['y'])
+predictions = np.array([knn_prediction,model1.prediction,model3.prediction])
+prediction = np.median(predictions,axis=0)
+prediction = np.round(prediction,0)
+
+dt = pd.DataFrame(data=prediction, columns=['y'])
 dt['id'] = dt.index
 dt = dt[['id', 'y']]
 dt.to_csv('submission', header=True, index=False)

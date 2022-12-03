@@ -3,35 +3,85 @@ import numpy as np
 from torch.utils.data import DataLoader, WeightedRandomSampler, TensorDataset
 import time
 
-class MultiLayerPerceptron(torch.nn.Module):
+class MultiLayerPerceptron1(torch.nn.Module):
 
     def __init__(self,input_dim:int,output_dim:int):
         super().__init__()
 
         # attach different layers/activations to self
         self.fc1 = torch.nn.Linear(input_dim,120)
-        self.fc2 = torch.nn.Linear(input_dim, 120)
         self.fc_out = torch.nn.Linear(120,output_dim)
-        self.activation_fn = torch.nn.Tanh()
+        self.activation_fn = torch.nn.Sigmoid()
         self.activation_fn1 = torch.nn.LogSigmoid()
 
     def forward(self,x:torch.Tensor) -> torch.Tensor:
         result=self.fc1(x)
         result=self.activation_fn(result)
         result=self.activation_fn1(result)
-        #result=self.fc2(x)
-        #result=self.activation_fn(result)
-        #result=self.activation_fn1(result)
         logits=self.fc_out(result)
         return logits
 
-class MLP1():
+class MultiLayerPerceptron2(torch.nn.Module):
 
-    def __init__(self,num_classes:int,epochs:int,predict=False):
+    def __init__(self,input_dim:int,output_dim:int):
+        super().__init__()
+
+        # attach different layers/activations to self
+        self.fc1 = torch.nn.Linear(input_dim,120)
+        self.fc_out = torch.nn.Linear(120,output_dim)
+        self.activation_fn = torch.nn.Sigmoid()
+        self.activation_fn1 = torch.nn.LogSigmoid()
+
+    def forward(self,x:torch.Tensor) -> torch.Tensor:
+        result=self.fc1(x)
+        result=self.activation_fn(result)
+        result=self.activation_fn1(result)
+        logits=self.fc_out(result)
+        return logits
+
+class MultiLayerPerceptron3(torch.nn.Module):
+
+    def __init__(self,input_dim:int,output_dim:int):
+        super().__init__()
+
+        # attach different layers/activations to self
+        self.fc1 = torch.nn.Linear(input_dim,60)
+        self.fc_out = torch.nn.Linear(60,output_dim)
+        self.activation_fn = torch.nn.Sigmoid()
+
+    def forward(self,x:torch.Tensor) -> torch.Tensor:
+        result=self.fc1(x)
+        result=self.activation_fn(result)
+        logits=self.fc_out(result)
+        return logits
+
+class MultiLayerPerceptron4(torch.nn.Module):
+
+    def __init__(self,input_dim:int,output_dim:int):
+        super().__init__()
+
+        # attach different layers/activations to self
+        self.fc1 = torch.nn.Linear(input_dim,30)
+        self.fc_out = torch.nn.Linear(30,output_dim)
+        self.activation_fn1 = torch.nn.LogSigmoid()
+
+    def forward(self,x:torch.Tensor) -> torch.Tensor:
+        result=self.fc1(x)
+        result=self.activation_fn1(result)
+        logits=self.fc_out(result)
+        return logits
+
+
+class MLP():
+
+    def __init__(self,num_classes:int,epochs:int,predict=False, MLP='MLP1'):
         # define general parameters
         self.num_classes = num_classes
         self.epochs = epochs
         self.predict = predict
+        if MLP != 'MLP1' and MLP != 'MLP2' and MLP != 'MLP3' and MLP != 'MLP4':
+            assert ('no such model exists')
+        self.MLP = MLP
 
     def load_data(self,x_train,x_test,y_train,y_test):
         # ----- convert features and labels to tensors -----#
@@ -60,7 +110,7 @@ class MLP1():
         if not self.predict:
             test_ds = TensorDataset(x_test_t, y_test_t)
 
-        # ----- setup a Weighted Random Sampler to account for Lable imbalance -----#
+        # ----- setup a Weighted Random Sampler to account for lable imbalance -----#
         class_counts = 0
         if self.num_classes == 2:
             class_counts = [np.size(np.where(y_train == 0)), np.size(np.where(y_train == 1))]
@@ -86,7 +136,14 @@ class MLP1():
 
     def load_model(self,x_train):
         # ----- generate model -----#
-        self.model = MultiLayerPerceptron(x_train.shape[1], self.num_classes)
+        if self.MLP == 'MLP1':
+            self.model = MultiLayerPerceptron1(x_train.shape[1], self.num_classes)
+        elif self.MLP == 'MLP2':
+            self.model = MultiLayerPerceptron2(x_train.shape[1], self.num_classes)
+        elif self.MLP == 'MLP3':
+            self.model = MultiLayerPerceptron3(x_train.shape[1], self.num_classes)
+        elif self.MLP == 'MLP4':
+            self.model = MultiLayerPerceptron4(x_train.shape[1], self.num_classes)
 
         # ----- define loss function -----#
         self.loss_fn = torch.nn.CrossEntropyLoss()
