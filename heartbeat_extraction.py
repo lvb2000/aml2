@@ -14,13 +14,15 @@ class biosppy:
         self.sampling_rate=sampling_rate
 
     def fit(self,X,y_train,show=False):
+        index = []
         for i,row in X.iterrows():
             signal = row.dropna().to_numpy(dtype='float32')
 
             r_peaks = ecg.engzee_segmenter(signal, self.sampling_rate)['rpeaks']
-            if len(r_peaks) >= 2:
-                extracted_heartbeats = ecg.extract_heartbeats(signal, r_peaks, self.sampling_rate)['templates']
-                #ecg.ecg(signal, self.sampling_rate,show=True)
+            if len(r_peaks) >= 20:
+                #extracted_heartbeats = ecg.extract_heartbeats(signal, r_peaks, self.sampling_rate)['templates']
+                ecg = ecg.ecg(signal, self.sampling_rate,show=show)
+                extracted_heartbeats = ecg[4]
                 #compute mean and std of extracted heartbeats
                 mean,std = self.__mean_variance__(normalize(extracted_heartbeats))
 
@@ -28,10 +30,11 @@ class biosppy:
                 self.means = np.concatenate((self.means,np.reshape(mean,(1,180))),axis=0)
                 self.stds = np.concatenate((self.stds,np.reshape(std,(1,180))),axis=0)
             else:
-                y_train=np.delete(y_train,i,axis=0)
+                index = index + [i]
 
         self.means = np.delete(self.means, 0, 0)
         self.stds = np.delete(self.stds,0,0)
+        y_train = np.delete(y_train, index, axis=0)
         return y_train
 
     def plot(self,mean,variance):
