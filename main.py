@@ -26,24 +26,26 @@ signals.toCSV(y_train1)
 
 
 #----------- IMPORT EXTRACTED HEARTBEATS FROM CSV -----------#
-"""
+
 mean_train = pd.read_csv('mean')
 std_train = pd.read_csv('std')
 y_train1 = pd.read_csv('y_train1')
-"""
+
 #----------- CREATE FEATURES FROM HEARTBEATS -----------#
-"""
+
 features = fc.feature_creation()
 features.createFeatures(std_train.to_numpy(),mean_train.to_numpy())
-df = features.getFeatures()
-"""
+#df = features.getFeatures()
+
 #----------- PLOT FEATURES -----------#
 """
 features.plotMeanStd(y_train1,mean_train,std_train)
 """
+#mean_dwt = fc.wavelet_decomp_recon(mean_train.to_numpy(),True)
+#tc = fc.find_time_center(mean_train.to_numpy(),True)
 
 #----------- IMPORT FEATURES -----------#
-
+"""
 x_train = pd.read_csv('features_ata.csv')
 x_test = pd.read_csv('test_features_ata.csv')
 y_train = pd.read_csv('y_train.csv')
@@ -104,3 +106,4 @@ dt = pd.DataFrame(data=prediction, columns=['y'])
 dt['id'] = dt.index
 dt = dt[['id', 'y']]
 dt.to_csv('submission', header=True, index=False)
+"""
