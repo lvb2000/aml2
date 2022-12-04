@@ -2,6 +2,7 @@ import torch
 import numpy as np
 from torch.utils.data import DataLoader, WeightedRandomSampler, TensorDataset
 import time
+from sklearn.metrics import f1_score
 
 class MultiLayerPerceptron1(torch.nn.Module):
 
@@ -191,14 +192,19 @@ class MLP():
             avg_train_loss = self.train_loss_cum / self.num_samples_epoch
             avg_acc = self.acc_cum / self.num_samples_epoch
             test_acc = torch.tensor(0.0)
+            f1=-1
             if not self.predict:
                 test_acc = self.evaluate(self.model, self.test_loader)
+                self.model.eval()
+                with torch.no_grad():
+                    f1 = f1_score(torch.argmax(self.model(torch.from_numpy(x_test).float()), axis=-1).numpy(),y_test,average='micro')
             epoch_duration = time.time() - t
 
             # print some infos
             print(f'Epoch {epoch} | Train loss: {self.train_loss_cum.item():.4f} | '
                   f' Train accuracy: {avg_acc.item():.4f} | Test accuracy: {test_acc.item():.4f} |'
-                  f' Duration {epoch_duration:.2f} sec')
+                  f' Duration {epoch_duration:.2f} sec |'
+                  f' F1 score {f1:.2f} sec')
 
     def accuracy(self,logits: torch.Tensor, label: torch.tensor) -> torch.Tensor:
         # computes the classification accuracy
