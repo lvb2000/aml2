@@ -62,10 +62,10 @@ y_train_combined[y_train_combined==1]=0
 y_train_combined[y_train_combined==2]=0
 y_train_combined[y_train_combined==3]=1
 
-#x_train, x_test_val, y_train_combined, y_test_val_combined = train_test_split(x_train, y_train_combined, test_size=0.4, random_state=42)
+x_train_val, x_test_val, y_train_val_combined, y_test_val_combined = train_test_split(x_train, y_train_combined, test_size=0.4, random_state=42)
 model1 = ANN.MLP(num_classes=2,epochs=1500,predict=True,MLP='MLP1')
 model1.train(x_train,np.squeeze(y_train_combined))
-#,x_test_val,np.squeeze(y_test_val)
+#x_train_val,np.squeeze(y_train_val_combined),x_test_val,np.squeeze(y_test_val_combined)
 model1.predict_test_set(x_test)
 """
 #----------- TRAIN ANN2 -----------#
@@ -102,7 +102,7 @@ knn_prediction = neigh.predict(x_test_std)
 #----------- COMBINE ALL CLASSIFIERS ---------#
 
 #----------- MAKE SUBMISSION ---------#
-
+"""
 predictions = np.array([model1.prediction])
 prediction = np.median(predictions,axis=0)
 prediction = np.round(prediction,0)
@@ -110,8 +110,8 @@ prediction = np.round(prediction,0)
 dt = pd.DataFrame(data=prediction, columns=['y'])
 dt['id'] = dt.index
 dt = dt[['id', 'y']]
-dt.to_csv('submission', header=True, index=False)
-"""
+dt.to_csv('submission.csv', header=True, index=False)
+
 #----------- Train ANN1 on rest -----------#
 
 x_train_red =x_train[np.where(np.squeeze(y_train_combined)==0),:]
@@ -120,11 +120,11 @@ y_train_red = y_train[np.where(np.squeeze(y_train_combined)==0)]
 x_train_red = np.squeeze(x_train_red)
 x_test_red = np.squeeze(x_test_red)
 
-#x_train_red, x_test_val_red, y_train_red, y_test_val_red = train_test_split(x_train_red, y_train_red, test_size=0.4, random_state=42)
+x_train_red, x_test_val_red, y_train_red, y_test_val_red = train_test_split(x_train_red, y_train_red, test_size=0.4, random_state=42)
 
 model2 = ANN.MLP(num_classes=3,epochs=1000,predict=True,MLP='MLP2')
-model2.train(x_train_red,np.squeeze(y_train_red))
-#,x_test_val,np.squeeze(y_test_val)
+model2.train(x_train_red,np.squeeze(y_train_red),x_test_val_red,np.squeeze(y_test_val_red))
+#,x_test_val_red,np.squeeze(y_test_val_red)
 model2.predict_test_set(x_test_red)
 
 #----------- MAKE SUBMISSION ---------#
