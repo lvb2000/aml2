@@ -195,9 +195,7 @@ class MLP():
             f1=-1
             if not self.predict:
                 test_acc = self.evaluate(self.model, self.test_loader)
-                self.model.eval()
-                with torch.no_grad():
-                    f1 = f1_score(torch.argmax(self.model(torch.from_numpy(x_test).float()), axis=-1).numpy(),y_test,average='micro')
+                f1 = self.f1(self.model, self.test_loader)
             epoch_duration = time.time() - t
 
             # print some infos
@@ -227,6 +225,19 @@ class MLP():
             avg_acc = acc_cum / num_eval_samples
             assert 0 <= avg_acc <= 1
             return avg_acc
+
+    def f1(self,model: torch.nn.Module, test_loader) -> torch.Tensor:
+        # goes through the test dataset and computes the test accuracy
+        model.eval()  # bring the model into eval mode
+        with torch.no_grad():
+            f1_cum = 0.0
+            num_eval_batches = 0
+            for x_batch_test, y_label_test in test_loader:
+                num_eval_batches += 1
+                f1_cum += f1_score(torch.argmax(self.model(x_batch_test), axis=-1).numpy(),torch.argmax(y_label_test, dim=1).numpy(),average='micro')
+            avg_f1 = f1_cum / num_eval_batches
+            assert 0 <= avg_f1 <= 1
+            return avg_f1
 
     def predict_test_set(self,x_test):
         if not self.predict:
