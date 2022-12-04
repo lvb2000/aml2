@@ -204,7 +204,7 @@ class MLP():
             print(f'Epoch {epoch} | Train loss: {self.train_loss_cum.item():.4f} | '
                   f' Train accuracy: {avg_acc.item():.4f} | Test accuracy: {test_acc.item():.4f} |'
                   f' Duration {epoch_duration:.2f} sec |'
-                  f' F1 score {f1:.2f} sec')
+                  f' F1 score {f1:.2f}')
 
     def accuracy(self,logits: torch.Tensor, label: torch.tensor) -> torch.Tensor:
         # computes the classification accuracy

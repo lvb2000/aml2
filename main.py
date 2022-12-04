@@ -54,17 +54,19 @@ x_test.drop(x_test.columns[0],axis=1,inplace=True)
 y_train.drop(y_train.columns[0],axis=1,inplace=True)
 x_train=x_train.to_numpy()
 y_train=y_train.to_numpy()
+x_test=x_test.to_numpy()
 
 #----------- TRAIN ANN1 -----------#
-y_train[y_train==1]=0
-y_train[y_train==2]=0
-y_train[y_train==3]=1
+y_train_combined =y_train.copy()
+y_train_combined[y_train_combined==1]=0
+y_train_combined[y_train_combined==2]=0
+y_train_combined[y_train_combined==3]=1
 
-#x_train, x_test_val, y_train, y_test_val = train_test_split(x_train, y_train, test_size=0.4, random_state=42)
-model1 = ANN.MLP(num_classes=2,epochs=400,predict=True,MLP='MLP1')
-model1.train(x_train,np.squeeze(y_train))
+#x_train, x_test_val, y_train_combined, y_test_val_combined = train_test_split(x_train, y_train_combined, test_size=0.4, random_state=42)
+model1 = ANN.MLP(num_classes=2,epochs=1500,predict=True,MLP='MLP1')
+model1.train(x_train,np.squeeze(y_train_combined))
 #,x_test_val,np.squeeze(y_test_val)
-model1.predict_test_set(x_test.to_numpy())
+model1.predict_test_set(x_test)
 """
 #----------- TRAIN ANN2 -----------#
 
@@ -100,8 +102,38 @@ knn_prediction = neigh.predict(x_test_std)
 #----------- COMBINE ALL CLASSIFIERS ---------#
 
 #----------- MAKE SUBMISSION ---------#
-"""
+
 predictions = np.array([model1.prediction])
+prediction = np.median(predictions,axis=0)
+prediction = np.round(prediction,0)
+
+dt = pd.DataFrame(data=prediction, columns=['y'])
+dt['id'] = dt.index
+dt = dt[['id', 'y']]
+dt.to_csv('submission', header=True, index=False)
+"""
+#----------- Train ANN1 on rest -----------#
+
+x_train_red =x_train[np.where(np.squeeze(y_train_combined)==0),:]
+x_test_red = x_test[np.where(model1.prediction==0),:]
+y_train_red = y_train[np.where(np.squeeze(y_train_combined)==0)]
+x_train_red = np.squeeze(x_train_red)
+x_test_red = np.squeeze(x_test_red)
+
+#x_train_red, x_test_val_red, y_train_red, y_test_val_red = train_test_split(x_train_red, y_train_red, test_size=0.4, random_state=42)
+
+model2 = ANN.MLP(num_classes=3,epochs=1000,predict=True,MLP='MLP2')
+model2.train(x_train_red,np.squeeze(y_train_red))
+#,x_test_val,np.squeeze(y_test_val)
+model2.predict_test_set(x_test_red)
+
+#----------- MAKE SUBMISSION ---------#
+
+sub=np.empty([x_test.shape[0],1])
+sub[np.where(model1.prediction==0)]=model2.prediction.reshape([np.where(model1.prediction==0)[0].shape[0],1])
+sub[np.where(model1.prediction!=0)]=3
+
+predictions = np.array([sub])
 prediction = np.median(predictions,axis=0)
 prediction = np.round(prediction,0)
 
