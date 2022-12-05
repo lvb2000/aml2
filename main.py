@@ -35,7 +35,7 @@ y_train1 = pd.read_csv('y_train1')
 
 features = fc.feature_creation()
 features.createFeatures(std_train.to_numpy(),mean_train.to_numpy())
-#df = features.getFeatures()
+df = features.getFeatures()
 
 #----------- PLOT FEATURES -----------#
 """
@@ -54,17 +54,20 @@ x_test.drop(x_test.columns[0],axis=1,inplace=True)
 y_train.drop(y_train.columns[0],axis=1,inplace=True)
 x_train=x_train.to_numpy()
 y_train=y_train.to_numpy()
+"""
+x_train=df.to_numpy()
+y_train=y_train1.to_numpy()
 
 #----------- TRAIN ANN1 -----------#
 
-#x_train, x_test_val, y_train, y_test_val = train_test_split(x_train, y_train, test_size=0.4, random_state=42)
-model1 = ANN.MLP(num_classes=4,epochs=600,predict=True,MLP='MLP1')
-model1.train(x_train,np.squeeze(y_train))
+x_train, x_test_val, y_train, y_test_val = train_test_split(x_train, y_train, test_size=0.4, random_state=42)
+model1 = ANN.MLP(num_classes=4,epochs=500,predict=False,MLP='MLP1')
+model1.train(x_train,np.squeeze(y_train),x_test_val,np.squeeze(y_test_val))
 #,x_test_val,np.squeeze(y_test_val)
-model1.predict_test_set(x_test.to_numpy())
+#model1.predict_test_set(x_test.to_numpy())
 
 #----------- TRAIN ANN2 -----------#
-
+"""
 model3 = ANN.MLP(num_classes=4,epochs=1300,predict=True,MLP='MLP3')
 model3.train(x_train,np.squeeze(y_train))
 #,x_test_val,np.squeeze(y_test_val)

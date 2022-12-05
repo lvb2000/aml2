@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import pywt
 from PyAstronomy import pyaC
 import biosppy.signals.ecg as ecg
+import math
 
 class feature_creation:
     # QRS
@@ -15,6 +16,7 @@ class feature_creation:
     Q_start_positions = []
     S_positions = []
     S_end_positions = []
+    tc = []
 
     # P
     P_position = []
@@ -25,11 +27,33 @@ class feature_creation:
     # mean of std
     mean_std = 0
 
+    # distance features
+    height_per_index=1.5
+    df1 = []
+    df2 = []
+    df3 = []
+    df4 = []
+    df5 = []
+    df6 = []
+    df7 = []
+    df8 = []
+    df_dwt1 = []
+    df_dwt2 = []
+    df_dwt3 = []
+    df_dwt4 = []
+    df_dwt5 = []
+    df_dwt6 = []
+    df_dwt7 = []
+    df_dwt8 = []
+
 
     def createFeatures(self,std,mean):
         self.__meanStd__(std)
         self.__R__(mean)
         self.__QRS__(mean)
+        self.find_time_center(mean, show=False)
+        mean_dwt = wavelet_decomp_recon(mean)
+        self.__distance_features__(mean,mean_dwt)
 
 
     def __meanStd__(self,std):
@@ -49,10 +73,212 @@ class feature_creation:
             self.S_positions.append(S_position)
             self.S_end_positions.append(S_end_position)
 
+    def __distance_features__(self,mean,mean_dwt):
+        for i,m in enumerate(mean):
+           self.__distance_feature1__(i,m,False)
+           self.__distance_feature2__(i,m,False)
+           self.__distance_feature3__(i,m,False)
+           self.__distance_feature4__(i,m,False)
+           self.__distance_feature5__(i,m,False)
+           self.__distance_feature6__(i,m,False)
+           self.__distance_feature7__(i,m,False)
+           self.__distance_feature8__(i,m,False)
+        for i,m in enumerate(mean_dwt):
+           self.__distance_feature1__(i, m,True)
+           self.__distance_feature2__(i, m,True)
+           self.__distance_feature3__(i, m,True)
+           self.__distance_feature4__(i, m,True)
+           self.__distance_feature5__(i, m,True)
+           self.__distance_feature6__(i, m,True)
+           self.__distance_feature7__(i, m,True)
+           self.__distance_feature8__(i, m,True)
 
+    def __distance_feature1__(self,i,m,dwt):
+        dp=[]
+        for j,v in enumerate(m):
+            if j > self.Q_start_positions[i][0] and j<self.tc[i]:
+                vmax=self.height_per_index*(self.tc[i]-j)/300
+                if v<vmax and v>0:
+                    dp.append(v)
+        if len(dp)==0:
+            if dwt:
+                self.df_dwt1.append(0)
+            else:
+                self.df1.append(0)
+        else:
+            sum=0
+            for j,p in enumerate(dp):
+                if j+1 < len(dp):
+                    sum+=math.sqrt(pow(abs(dp[j+1]-p),2)+pow((1/300),2))
+            if dwt:
+                self.df_dwt1.append(sum)
+            else:
+                self.df1.append(sum)
+
+
+    def __distance_feature2__(self,i,m,dwt):
+        dp=[]
+        for j,v in enumerate(m):
+            if j > self.Q_start_positions[i][0] and j<self.tc[i]:
+                upper_bound=self.height_per_index*(self.tc[i]-self.Q_start_positions[i][0])
+                vmax=self.height_per_index*(self.tc[i]-j)/300
+                if v>vmax and v<upper_bound:
+                    dp.append(v)
+        if len(dp) == 0:
+            if dwt:
+                self.df_dwt2.append(0)
+            else:
+                self.df2.append(0)
+        else:
+            sum=0
+            for j,p in enumerate(dp):
+                if j+1 < len(dp):
+                    sum+=math.sqrt(pow(abs(dp[j+1]-p),2)+pow((1/300),2))
+            if dwt:
+                self.df_dwt2.append(sum)
+            else:
+                self.df2.append(sum)
+
+    def __distance_feature3__(self,i,m,dwt):
+        dp=[]
+        for j,v in enumerate(m):
+            if j > self.Q_start_positions[i][0] and j<self.tc[i]:
+                upper_bound=self.height_per_index*(self.tc[i]-self.Q_start_positions[i][0])
+                vmax=self.height_per_index*(self.tc[i]-j)/300
+                if v>-vmax and v<0:
+                    dp.append(v)
+        if len(dp) == 0:
+            if dwt:
+                self.df_dwt3.append(0)
+            else:
+                self.df3.append(0)
+        else:
+            sum=0
+            for j,p in enumerate(dp):
+                if j+1 < len(dp):
+                    sum+=math.sqrt(pow(abs(dp[j+1]-p),2)+pow((1/300),2))
+            if dwt:
+                self.df_dwt3.append(sum)
+            else:
+                self.df3.append(sum)
+
+    def __distance_feature4__(self,i,m,dwt):
+        dp=[]
+        for j,v in enumerate(m):
+            if j > self.Q_start_positions[i][0] and j<self.tc[i]:
+                upper_bound=self.height_per_index*(self.tc[i]-self.Q_start_positions[i][0])
+                vmax=self.height_per_index*(self.tc[i]-j)/300
+                if v>-upper_bound and v<-vmax:
+                    dp.append(v)
+        if len(dp) == 0:
+            if dwt:
+                self.df_dwt4.append(0)
+            else:
+                self.df4.append(0)
+        else:
+            sum=0
+            for j,p in enumerate(dp):
+                if j+1 < len(dp):
+                    sum+=math.sqrt(pow(abs(dp[j+1]-p),2)+pow((1/300),2))
+            if dwt:
+                self.df_dwt4.append(sum)
+            else:
+                self.df4.append(sum)
+
+    def __distance_feature5__(self,i,m,dwt):
+        dp=[]
+        for j,v in enumerate(m):
+            if j < self.S_end_positions[i][0] and j>self.tc[i]:
+                upper_bound=self.height_per_index*(self.tc[i]-self.Q_start_positions[i][0])
+                vmax=self.height_per_index*(j-self.tc[i])/300
+                if v>0 and v<vmax:
+                    dp.append(v)
+        if len(dp) == 0:
+            if dwt:
+                self.df_dwt5.append(0)
+            else:
+                self.df5.append(0)
+        else:
+            sum=0
+            for j,p in enumerate(dp):
+                if j+1 < len(dp):
+                    sum+=math.sqrt(pow(abs(dp[j+1]-p),2)+pow((1/300),2))
+            if dwt:
+                self.df_dwt5.append(sum)
+            else:
+                self.df5.append(sum)
+
+    def __distance_feature6__(self,i,m,dwt):
+        dp=[]
+        for j,v in enumerate(m):
+            if j < self.S_end_positions[i][0] and j>self.tc[i]:
+                upper_bound=self.height_per_index*(self.tc[i]-self.Q_start_positions[i][0])
+                vmax=self.height_per_index*(j-self.tc[i])/300
+                if v>vmax and v<upper_bound:
+                    dp.append(v)
+        if len(dp) == 0:
+            if dwt:
+                self.df_dwt6.append(0)
+            else:
+                self.df6.append(0)
+        else:
+            sum=0
+            for j,p in enumerate(dp):
+                if j+1 < len(dp):
+                    sum+=math.sqrt(pow(abs(dp[j+1]-p),2)+pow((1/300),2))
+            if dwt:
+                self.df_dwt6.append(sum)
+            else:
+                self.df6.append(sum)
+
+    def __distance_feature7__(self,i,m,dwt):
+        dp=[]
+        for j,v in enumerate(m):
+            if j < self.S_end_positions[i][0] and j>self.tc[i]:
+                upper_bound=self.height_per_index*(self.tc[i]-self.Q_start_positions[i][0])
+                vmax=self.height_per_index*(j-self.tc[i])/300
+                if v>-vmax and v<0:
+                    dp.append(v)
+        if len(dp) == 0:
+            if dwt:
+                self.df_dwt7.append(0)
+            else:
+                self.df7.append(0)
+        else:
+            sum=0
+            for j,p in enumerate(dp):
+                if j+1 < len(dp):
+                    sum+=math.sqrt(pow(abs(dp[j+1]-p),2)+pow((1/300),2))
+            if dwt:
+                self.df_dwt7.append(sum)
+            else:
+                self.df7.append(sum)
+
+    def __distance_feature8__(self,i,m,dwt):
+        dp=[]
+        for j,v in enumerate(m):
+            if j < self.S_end_positions[i][0] and j>self.tc[i]:
+                upper_bound=self.height_per_index*(self.tc[i]-self.Q_start_positions[i][0])
+                vmax=self.height_per_index*(j-self.tc[i])/300
+                if v>-upper_bound and v<-vmax:
+                    dp.append(v)
+        if len(dp) == 0:
+            if dwt:
+                self.df_dwt8.append(0)
+            else:
+                self.df8.append(0)
+        else:
+            sum=0
+            for j,p in enumerate(dp):
+                if j+1 < len(dp):
+                    sum+=math.sqrt(pow(abs(dp[j+1]-p),2)+pow((1/300),2))
+            if dwt:
+                self.df_dwt8.append(sum)
+            else:
+                self.df8.append(sum)
 
     def getFeatures(self):
-        features = pd.DataFrame(data=np.transpose(np.array([self.mean_std])), columns=['mean_std'])
+        features = pd.DataFrame(data=np.transpose(np.array([self.df1,self.df2,self.df3,self.df4,self.df5,self.df6,self.df7,self.df8,self.df_dwt1,self.df_dwt2,self.df_dwt3,self.df_dwt4,self.df_dwt5,self.df_dwt6,self.df_dwt7,self.df_dwt8])), columns=['df1','df2','df3','df4','df5','df6','df7','df8','df_dwt1','df_dwt2','df_dwt3','df_dwt4','df_dwt5','df_dwt6','df_dwt7','df_dwt8'])
         return features
 
     def plotMeanStd(self,y_train,means,variances):
@@ -83,25 +309,23 @@ class feature_creation:
 
         plt.show()
 
-    def find_time_center(data, show=False):
-        tc = []
+    def find_time_center(self,data, show=False):
         for j, x in enumerate(data):
             xc, xi = pyaC.zerocross1d(np.array(range(len(x))), x, getIndices=True)
-            tc.append(int(np.mean(xi)))
+            self.tc.append(int(np.mean(xi)))
 
             if j % 1000 == 0 and show:
                 plt.plot(range(len(x)), x)
-                plt.vlines(tc[j], -0.25, 0.25)
+                plt.vlines(self.tc[j], -0.25, 0.25)
                 plt.show()
 
-        return tc
 
 def wavelet_decomp_recon(mean,show=False):
     mean_dwt=[]
     mode = pywt.Modes.smooth
 
     for j,x in enumerate(mean):
-        w = pywt.Wavelet('sym4')
+        w = pywt.Wavelet('sym5')
         a=x
         ca=[]
         cd=[]

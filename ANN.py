@@ -2,6 +2,7 @@ import torch
 import numpy as np
 from torch.utils.data import DataLoader, WeightedRandomSampler, TensorDataset
 import time
+from sklearn.metrics import f1_score
 
 class MultiLayerPerceptron1(torch.nn.Module):
 
@@ -9,8 +10,8 @@ class MultiLayerPerceptron1(torch.nn.Module):
         super().__init__()
 
         # attach different layers/activations to self
-        self.fc1 = torch.nn.Linear(input_dim,120)
-        self.fc_out = torch.nn.Linear(120,output_dim)
+        self.fc1 = torch.nn.Linear(input_dim,18)
+        self.fc_out = torch.nn.Linear(18,output_dim)
         self.activation_fn = torch.nn.Sigmoid()
         self.activation_fn1 = torch.nn.LogSigmoid()
 
@@ -193,12 +194,14 @@ class MLP():
             test_acc = torch.tensor(0.0)
             if not self.predict:
                 test_acc = self.evaluate(self.model, self.test_loader)
+                f1 = self.f1(self.model, self.test_loader)
             epoch_duration = time.time() - t
 
             # print some infos
             print(f'Epoch {epoch} | Train loss: {self.train_loss_cum.item():.4f} | '
                   f' Train accuracy: {avg_acc.item():.4f} | Test accuracy: {test_acc.item():.4f} |'
-                  f' Duration {epoch_duration:.2f} sec')
+                  f' Duration {epoch_duration:.2f} sec |'
+                  f' F1 score {f1:.4f}')
 
     def accuracy(self,logits: torch.Tensor, label: torch.tensor) -> torch.Tensor:
         # computes the classification accuracy
@@ -221,6 +224,20 @@ class MLP():
             avg_acc = acc_cum / num_eval_samples
             assert 0 <= avg_acc <= 1
             return avg_acc
+
+    def f1(self,model: torch.nn.Module, test_loader) -> torch.Tensor:
+        # goes through the test dataset and computes the test accuracy
+        model.eval()  # bring the model into eval mode
+        with torch.no_grad():
+            f1_cum = 0.0
+            num_eval_batches = 0
+            for x_batch_test, y_label_test in test_loader:
+                num_eval_batches += 1
+                f1_cum += f1_score(torch.argmax(self.model(x_batch_test), axis=-1).numpy(),torch.argmax(y_label_test, dim=1).numpy(),average='micro')
+            avg_f1 = f1_cum / num_eval_batches
+            assert 0 <= avg_f1 <= 1
+            return avg_f1
+
 
     def predict_test_set(self,x_test):
         if not self.predict:
